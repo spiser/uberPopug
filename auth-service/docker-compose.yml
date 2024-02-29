@@ -1,16 +1,16 @@
 services:
-    laravel.test:
+    laravel:
+        container_name: laravel_${APP_NAME}
         build:
-            context: ./vendor/laravel/sail/runtimes/8.3
+            context: ./local/php
             dockerfile: Dockerfile
             args:
                 WWWGROUP: '${WWWGROUP}'
-        image: sail-8.3/app
+        image: sail-8.3/app-kafka
         extra_hosts:
             - 'host.docker.internal:host-gateway'
         ports:
             - '${APP_PORT:-80}:80'
-            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
         environment:
             WWWUSER: '${WWWUSER}'
             LARAVEL_SAIL: 1
@@ -20,10 +20,11 @@ services:
         volumes:
             - '.:/var/www/html'
         networks:
-            - sail
+            - popugs
         depends_on:
-            - pgsql
-    pgsql:
+            - database_auth-service
+    database_auth-service:
+        container_name: database_${APP_NAME}
         image: 'postgres:15'
         ports:
             - '${FORWARD_DB_PORT:-5432}:5432'
@@ -36,7 +37,7 @@ services:
             - 'sail-pgsql:/var/lib/postgresql/data'
             - './vendor/laravel/sail/database/pgsql/create-testing-database.sql:/docker-entrypoint-initdb.d/10-create-testing-database.sql'
         networks:
-            - sail
+            - popugs
         healthcheck:
             test:
                 - CMD
@@ -49,8 +50,9 @@ services:
             retries: 3
             timeout: 5s
 networks:
-    sail:
+    popugs:
         driver: bridge
+        external: true
 volumes:
     sail-pgsql:
         driver: local
