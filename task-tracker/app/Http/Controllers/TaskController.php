@@ -21,12 +21,12 @@ class TaskController extends Controller
     {
         $currentUser = $request->user();
 
-        $tasks = Task::query()
-            ->orderBy('id')
-            ->get();
+        $query = Task::query()->orderBy('id');
+        if ($currentUser->role === UserRole::worker)
+            $query->where('user_id', $currentUser->id);
 
         return view('dashboard', [
-            'tasks' => $tasks,
+            'tasks' => $query->get(),
             'currentUser' => $currentUser
         ]);
     }
