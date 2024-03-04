@@ -9,11 +9,11 @@ use App\Models\User;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Arr;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
 use Junges\Kafka\Facades\Kafka;
 use Junges\Kafka\Message\Message;
+use Junges\Kafka\Producers\MessageBatch;
 
 class TaskController extends Controller
 {
@@ -201,6 +201,8 @@ class TaskController extends Controller
             ->get();
 
         if (count($tasks) > 1 && count($users) > 1) {
+            $messageBatch = new MessageBatch();
+
             /** @var Task $task */
             foreach ($tasks as $task) {
                 do {
@@ -210,8 +212,8 @@ class TaskController extends Controller
                 $task->user_id = $newUserId;
                 $task->save();
 
-                Kafka::publishOn(topic: 'tasks-flow')
-                    ->withMessage(new Message(
+                $messageBatch->push(
+                    new Message(
                         body: [
                             'event_name' => 'TaskAssigned',
                             'public_id' => $task->public_id,
@@ -219,10 +221,13 @@ class TaskController extends Controller
                                 'public_user_id' => $task->user->public_id,
                             ]
                         ]
-                    ))
-                    ->withDebugEnabled()
-                    ->send();
+                    )
+                );
             }
+
+            Kafka::publishOn(topic: 'tasks-flow')
+                ->withDebugEnabled()
+                ->sendBatch($messageBatch);
         }
 
         return Redirect::to('/dashboard');
