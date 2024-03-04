@@ -26,7 +26,6 @@
                             <th>Пользователь</th>
                             <th>Статус</th>
                             <th></th>
-                            <th></th>
                         </tr>
                         @foreach($tasks as $task)
                             <tr>
@@ -35,14 +34,7 @@
                                 <td>{{$task->user->name}} ({{$task->user->email}})</td>
                                 <td>{{$task->status}}</td>
                                 <td>
-                                    @if($currentUser->role === \App\Enums\UserRole::manager)
-                                        <x-secondary-button onclick="location.href = '/task/{{$task->id}}';">
-                                            {{ __('Edit') }}
-                                        </x-secondary-button>
-                                    @endif
-                                </td>
-                                <td>
-                                    @if($currentUser->role === \App\Enums\UserRole::worker && $task->status !== \App\Enums\TaskStatus::done)
+                                    @if($currentUser->role === \App\Enums\UserRole::worker && $currentUser->id === $task->user_id && $task->status !== \App\Enums\TaskStatus::done)
                                         <form method="post" action="{{ route('task.done', $task->id) }}">
                                             @csrf
                                             @method('patch')
