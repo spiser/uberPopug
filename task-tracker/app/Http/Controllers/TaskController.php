@@ -31,27 +31,6 @@ class TaskController extends Controller
         ]);
     }
 
-    public function edit(Request $request): View
-    {
-        $task = null;
-
-        if ($request->id) {
-            $task = Task::query()->findOrFail($request->id);
-        }
-
-        $users = User::query()
-            ->whereNotNull('name')
-            ->whereNotNull('email')
-            ->where('role', UserRole::worker->value)
-            ->where('active', true)
-            ->get();
-
-        return view('task.edit', [
-            'task' => $task,
-            'users' => $users
-        ]);
-    }
-
     public function store(Request $request): RedirectResponse
     {
         /** @var Task $task */
@@ -93,49 +72,6 @@ class TaskController extends Controller
         return Redirect::to('/dashboard');
     }
 
-    public function update(Request $request, Task $task): RedirectResponse
-    {
-        /** @var Task $task */
-        $task = Task::query()->findOrFail($request->id);
-
-        $task->fill([
-            'description' => $request->description,
-            'user_id' => $request->user_id,
-        ]);
-
-        $task->save();
-
-        Kafka::publishOn(topic: 'tasks-stream')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'TaskUpdated',
-                    'public_id' => $task->public_id,
-                    'data' => [
-                        'description' => $task->description,
-                        'status' => $task->status,
-                        'public_user_id' => $task->user->public_id,
-                    ]
-                ]
-            ))
-            ->withDebugEnabled()
-            ->send();
-
-        Kafka::publishOn(topic: 'tasks-flow')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'TaskAssigned',
-                    'public_id' => $task->public_id,
-                    'data' => [
-                        'public_user_id' => $task->user->public_id,
-                    ]
-                ]
-            ))
-            ->withDebugEnabled()
-            ->send();
-
-        return Redirect::to('/dashboard');
-    }
-
     public function done(Request $request): RedirectResponse
     {
         if ($request->user()->role !== UserRole::worker) {
@@ -149,21 +85,6 @@ class TaskController extends Controller
 
         $task->status = TaskStatus::done;
         $task->save();
-
-        Kafka::publishOn(topic: 'tasks-stream')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'TaskUpdated',
-                    'public_id' => $task->public_id,
-                    'data' => [
-                        'description' => $task->description,
-                        'status' => $task->status,
-                        'public_user_id' => $task->user->public_id,
-                    ]
-                ]
-            ))
-            ->withDebugEnabled()
-            ->send();
 
         Kafka::publishOn(topic: 'tasks-flow')
             ->withMessage(new Message(
