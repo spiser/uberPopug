@@ -35,9 +35,8 @@ Route::get('/sso/user-info',[SSOController::class, 'userInfo'])
 
 
 Route::middleware('auth')->group(function () {
-    Route::get('/task', [TaskController::class, 'edit'])->name('task.view');
+    Route::get('/task', [TaskController::class, 'add'])->name('task.add');
     Route::get('/task/shuffle', [TaskController::class, 'shuffle'])->name('task.shuffle');
-    Route::get('/task/{id}', [TaskController::class, 'edit'])->name('task.view');
     Route::post('/task', [TaskController::class, 'store'])->name('task.store');
     Route::patch('/task/{id}', [TaskController::class, 'update'])->name('task.update');
     Route::patch('/task/{id}/done', [TaskController::class, 'done'])->name('task.done');
