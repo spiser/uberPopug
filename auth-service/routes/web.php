@@ -30,7 +30,7 @@ Route::middleware('auth')->group(function () {
 });
 
 Route::middleware('auth')->group(function () {
-    Route::get('/user', [UserController::class, 'edit'])->name('user.view');
+    Route::get('/user', [UserController::class, 'edit'])->name('user.add');
     Route::get('/user/{id}', [UserController::class, 'edit'])->name('user.view');
     Route::post('/user', [UserController::class, 'store'])->name('user.store');
     Route::patch('/user/{id}', [UserController::class, 'update'])->name('user.update');
