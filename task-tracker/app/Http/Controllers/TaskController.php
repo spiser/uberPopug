@@ -49,7 +49,7 @@ class TaskController extends Controller
                         'public_id' => $task->public_id,
                         'description' => $task->description,
                         'status' => $task->status,
-                        'public_user_id' => $task->user->public_id,
+                        'assigned_user_id' => $task->user->public_id,
                     ]
                 ]
             ))
@@ -62,7 +62,7 @@ class TaskController extends Controller
                     'event_name' => 'TaskAssigned',
                     'data' => [
                         'public_id' => $task->public_id,
-                        'public_user_id' => $task->user->public_id,
+                        'assigned_user_id' => $task->user->public_id,
                     ]
                 ]
             ))
