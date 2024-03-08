@@ -31,6 +31,25 @@ class TaskController extends Controller
         ]);
     }
 
+    public function add(Request $request): View
+    {
+        $task = null;
+
+        if ($request->id) {
+            $task = Task::query()->findOrFail($request->id);
+        }
+
+        $users = User::query()
+            ->where('role', UserRole::worker->value)
+            ->where('active', true)
+            ->get();
+
+        return view('task.add', [
+            'task' => $task,
+            'users' => $users
+        ]);
+    }
+
     public function store(Request $request): RedirectResponse
     {
         /** @var Task $task */
@@ -111,8 +130,6 @@ class TaskController extends Controller
         }
 
         $users = User::query()
-            ->whereNotNull('name')
-            ->whereNotNull('email')
             ->where('role', UserRole::worker->value)
             ->where('active', true)
             ->get();
