@@ -34,7 +34,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/user/{id}', [UserController::class, 'edit'])->name('user.view');
     Route::post('/user', [UserController::class, 'store'])->name('user.store');
     Route::patch('/user/{id}', [UserController::class, 'update'])->name('user.update');
-    Route::delete('/user/{id}', [UserController::class, 'destroy'])->name('user.destroy');
 });
 
 require __DIR__.'/auth.php';
