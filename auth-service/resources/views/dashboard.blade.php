@@ -37,17 +37,6 @@
                                         {{ __('Edit') }}
                                     </x-secondary-button>
                                 </td>
-                                <td>
-                                    @if($user->active)
-                                        <form method="post" action="{{ route('user.destroy', $user->id) }}" class="p-6">
-                                            @csrf
-                                            @method('delete')
-                                            <x-danger-button class="ms-3">
-                                                {{ __('Delete') }}
-                                            </x-danger-button>
-                                        </form>
-                                    @endif
-                                </td>
                             </tr>
 
                         @endforeach

@@ -4,9 +4,11 @@ namespace App\Http\Controllers;
 
 use App\Enums\UserRole;
 use App\Models\User;
+use Exception;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
@@ -41,43 +43,52 @@ class UserController extends Controller
 
     public function store(Request $request): RedirectResponse
     {
-        /** @var User $user */
-        $user = User::query()->create([
-            'name' => $request->name,
-            'email' => $request->email,
-            'password' => Hash::make($request->password),
-            'role' => $request->role,
-        ]);
+        DB::beginTransaction();
 
-        $user->refresh();
+        try {
+            /** @var User $user */
+            $user = User::query()->create([
+                'name' => $request->name,
+                'email' => $request->email,
+                'password' => Hash::make($request->password),
+                'role' => $request->role,
+            ]);
 
-        Kafka::publishOn(topic: 'users-stream')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'UserCreated',
-                    'public_id' => $user->public_id,
-                    'data' => [
-                        'name' => $user->name,
-                        'email' => $user->email,
+            $user->refresh();
+
+            Kafka::publishOn(topic: 'users-stream')
+                ->withMessage(new Message(
+                    body: [
+                        'event_name' => 'UserCreated',
+                        'data' => [
+                            'public_id' => $user->public_id,
+                            'name' => $user->name,
+                            'email' => $user->email,
+                        ]
                     ]
-                ]
-            ))
-            ->withDebugEnabled()
-            ->send();
+                ))
+                ->withDebugEnabled()
+                ->send();
 
 
-        Kafka::publishOn(topic: 'users-role')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'UserRoleChanged',
-                    'public_id' => $user->public_id,
-                    'data' => [
-                        'role' => $user->role,
+            Kafka::publishOn(topic: 'users-role')
+                ->withMessage(new Message(
+                    body: [
+                        'event_name' => 'UserRoleChanged',
+                        'data' => [
+                            'public_id' => $user->public_id,
+                            'role' => $user->role,
+                        ]
                     ]
-                ]
-            ))
-            ->withDebugEnabled()
-            ->send();
+                ))
+                ->withDebugEnabled()
+                ->send();
+
+            DB::commit();
+        } catch (Exception $e) {
+            DB::rollBack();
+            throw $e;
+        }
 
         return Redirect::to('/dashboard');
     }
@@ -103,8 +114,8 @@ class UserController extends Controller
             ->withMessage(new Message(
                 body: [
                     'event_name' => 'UserUpdated',
-                    'public_id' => $user->public_id,
                     'data' => [
+                        'public_id' => $user->public_id,
                         'name' => $user->name,
                         'email' => $user->email,
                     ]
@@ -118,8 +129,8 @@ class UserController extends Controller
                 ->withMessage(new Message(
                     body: [
                         'event_name' => 'UserRoleChanged',
-                        'public_id' => $user->public_id,
                         'data' => [
+                            'public_id' => $user->public_id,
                             'role' => $user->role,
                         ]
                     ]
@@ -127,30 +138,6 @@ class UserController extends Controller
                 ->withDebugEnabled()
                 ->send();
         }
-
-        return Redirect::to('/dashboard');
-    }
-
-    public function destroy(Request $request): RedirectResponse
-    {
-        if ($request->id === $request->user()->id) {
-            throw new \Exception('Нельзя удалить самого себя');
-        }
-
-        $user = User::query()->findOrFail($request->id);
-
-        $user->active = false;
-        $user->save();
-
-        Kafka::publishOn(topic: 'users-stream')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'UserDeleted',
-                    'public_id' => $user->public_id
-                ]
-            ))
-            ->withDebugEnabled()
-            ->send();
 
         return Redirect::to('/dashboard');
     }

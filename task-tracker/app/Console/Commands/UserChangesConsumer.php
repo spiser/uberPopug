@@ -17,7 +17,7 @@ class UserChangesConsumer extends Command
         parent::__construct();
     }
 
-    protected $signature = "consume:user-changes";
+    protected $signature = "consume:users-changes";
 
     public function handle()
     {
@@ -34,7 +34,6 @@ class UserChangesConsumer extends Command
                             ->where('public_id', $body['public_id'])
                             ->first();
 
-                        // если пользователь уже был создан как заглушка
                         if ($user === null) {
                             User::query()->create([
                                 'public_id' => $body['public_id'],
@@ -42,6 +41,7 @@ class UserChangesConsumer extends Command
                                 'email' => $body['data']['email'],
                             ]);
                         } else {
+                            // если пользователь уже был создан как заглушка
                             $user->fill([
                                 'name' => $body['data']['name'],
                                 'email' => $body['data']['email'],
@@ -77,14 +77,6 @@ class UserChangesConsumer extends Command
                             $user->role = $body['data']['role'];
                             $user->save();
                         }
-                        break;
-
-                    case 'UserDeleted':
-                        $user = User::query()
-                            ->where('public_id', $body['public_id'])
-                            ->firstOrFail();
-                        $user->active = false;
-                        $user->save();
                         break;
                 }
             })

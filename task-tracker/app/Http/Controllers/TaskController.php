@@ -45,8 +45,8 @@ class TaskController extends Controller
             ->withMessage(new Message(
                 body: [
                     'event_name' => 'TaskCreated',
-                    'public_id' => $task->public_id,
                     'data' => [
+                        'public_id' => $task->public_id,
                         'description' => $task->description,
                         'status' => $task->status,
                         'public_user_id' => $task->user->public_id,
@@ -60,8 +60,8 @@ class TaskController extends Controller
             ->withMessage(new Message(
                 body: [
                     'event_name' => 'TaskAssigned',
-                    'public_id' => $task->public_id,
                     'data' => [
+                        'public_id' => $task->public_id,
                         'public_user_id' => $task->user->public_id,
                     ]
                 ]
@@ -90,8 +90,8 @@ class TaskController extends Controller
             ->withMessage(new Message(
                 body: [
                     'event_name' => 'TaskCompleted',
-                    'public_id' => $task->public_id,
                     'data' => [
+                        'public_id' => $task->public_id,
                         'public_user_id' => $task->user->public_id,
                     ]
                 ]
@@ -137,9 +137,9 @@ class TaskController extends Controller
                     new Message(
                         body: [
                             'event_name' => 'TaskAssigned',
-                            'public_id' => $task->public_id,
                             'data' => [
-                                'public_user_id' => $task->user->public_id,
+                                'public_id' => $task->public_id,
+                                'assigned_user_id' => $task->user->public_id,
                             ]
                         ]
                     )
