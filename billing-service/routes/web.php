@@ -1,8 +1,9 @@
 <?php
 
 use App\Http\Controllers\Auth\SSOController;
+use App\Http\Controllers\ManagerController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\BillingController;
+use App\Http\Controllers\WorkerController;
 use Illuminate\Support\Facades\Route;
 
 /*
@@ -20,8 +21,10 @@ Route::get('/', function () {
     return view('welcome');
 });
 
-Route::middleware(['auth', 'verified'])
-    ->get('/dashboard', [BillingController::class, 'list'])->name('dashboard');
+Route::middleware('auth')->group(function () {
+    Route::get('/dashboard', [ManagerController::class, 'view'])->name('dashboard');
+    Route::get('/worker/view', [WorkerController::class, 'view'])->name('profile.view');
+});
 
 
 Route::get('/sso/login', [SSOController::class, 'login'])
