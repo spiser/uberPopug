@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
  * @property int    $id
  * @property string $user_id
  * @property string $description
- * @property string $status
+ * @property TaskStatus $status
  * @property string $public_id
  */
 class Task extends Model

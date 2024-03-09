@@ -12,9 +12,9 @@
                     <x-secondary-button onclick="location.href = '/task';">
                         {{ __('Add') }}
                     </x-secondary-button>
-                    @if($currentUser->role === \App\Enums\UserRole::manager)
+                    @if($currentUser->role === \App\Enums\UserRole::manager || $currentUser->role === \App\Enums\UserRole::admin)
                         <x-danger-button onclick="location.href = '/task/shuffle';">
-                            {{ __('Shuffle all tasks') }}
+                            {{ __('Заассайнить задачи') }}
                         </x-danger-button>
                     @endif
                 </div>

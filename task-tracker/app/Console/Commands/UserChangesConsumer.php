@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Enums\UserRole;
 use App\Models\User;
 use Illuminate\Console\Command;
 use Junges\Kafka\Contracts\KafkaConsumerMessage;
@@ -22,21 +23,23 @@ class UserChangesConsumer extends Command
     public function handle()
     {
         $consumer = Kafka::createConsumer(['users-stream', 'users-role'])
-            ->withAutoCommit()
+            ->withConsumerGroupId(env('APP_NAME'))
             ->withHandler(function(KafkaConsumerMessage $message) {
                 $body = $message->getBody();
 
+                $this->info(print_r($body, true));
                 $this->logger->debug($body);
 
-                switch ($body['event_name']) {
-                    case 'UserCreated':
+                switch ([$body['event_name'], $body['event_version']]) {
+                    case ['UserCreated', '1']:
+                    case ['UserUpdated', '1']:
                         $user = User::query()
-                            ->where('public_id', $body['public_id'])
+                            ->where('public_id', $body['data']['public_id'])
                             ->first();
 
                         if ($user === null) {
                             User::query()->create([
-                                'public_id' => $body['public_id'],
+                                'public_id' => $body['data']['public_id'],
                                 'name' => $body['data']['name'],
                                 'email' => $body['data']['email'],
                             ]);
@@ -50,31 +53,20 @@ class UserChangesConsumer extends Command
                         }
                         break;
 
-                    case 'UserUpdated':
+                    case ['UserRoleChanged', '1']:
                         $user = User::query()
-                            ->where('public_id', $body['public_id'])
-                            ->firstOrFail();
-
-                        $user->fill([
-                            'name' => $body['data']['name'],
-                            'email' => $body['data']['email'],
-                        ]);
-                        $user->save();
-                        break;
-
-                    case 'UserRoleChanged':
-                        $user = User::query()
-                            ->where('public_id', $body['public_id'])
+                            ->where('public_id', $body['data']['public_id'])
                             ->first();
 
                         // Если пользователь еще не создан, создаем его как заглушку
                         if ($user === null) {
                             User::query()->create([
-                                'public_id' => $body['public_id'],
-                                'role' => $body['data']['role'],
+                                'public_id' => $body['data']['public_id'],
+                                'role' => UserRole::from($body['data']['role']),
+                                'active' => false,
                             ]);
                         } else {
-                            $user->role = $body['data']['role'];
+                            $user->role = UserRole::from($body['data']['role']);
                             $user->save();
                         }
                         break;
