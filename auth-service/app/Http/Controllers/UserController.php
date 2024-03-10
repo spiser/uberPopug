@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Services\KafkaService;
 use App\Enums\UserRole;
 use App\Models\User;
 use Exception;
@@ -12,11 +13,15 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Redirect;
 use Illuminate\View\View;
-use Junges\Kafka\Facades\Kafka;
-use Junges\Kafka\Message\Message;
+use Ramsey\Uuid\Uuid;
 
 class UserController extends Controller
 {
+    public function __construct(
+        private readonly KafkaService $kafkaService
+    ) {
+    }
+
     public function list(Request $request): View
     {
         $users = User::query()
@@ -56,33 +61,36 @@ class UserController extends Controller
 
             $user->refresh();
 
-            Kafka::publishOn(topic: 'users-stream')
-                ->withMessage(new Message(
-                    body: [
-                        'event_name' => 'UserCreated',
-                        'data' => [
-                            'public_id' => $user->public_id,
-                            'name' => $user->name,
-                            'email' => $user->email,
-                        ]
+            $this->kafkaService->produce(
+                topic: 'users-stream',
+                data: [
+                    'event_id' => Uuid::uuid6()->toString(),
+                    'event_version' => '1',
+                    'event_name' => 'UserCreated',
+                    'event_time' => time(),
+                    'producer' => env('APP_NAME'),
+                    'data' => [
+                        'public_id' => $user->public_id,
+                        'name' => $user->name,
+                        'email' => $user->email,
                     ]
-                ))
-                ->withDebugEnabled()
-                ->send();
+                ]
+            );
 
-
-            Kafka::publishOn(topic: 'users-role')
-                ->withMessage(new Message(
-                    body: [
-                        'event_name' => 'UserRoleChanged',
-                        'data' => [
-                            'public_id' => $user->public_id,
-                            'role' => $user->role,
-                        ]
+            $this->kafkaService->produce(
+                topic: 'users-role',
+                data: [
+                    'event_id' => Uuid::uuid6()->toString(),
+                    'event_version' => '1',
+                    'event_name' => 'UserRoleChanged',
+                    'event_time' => time(),
+                    'producer' => env('APP_NAME'),
+                    'data' => [
+                        'public_id' => $user->public_id,
+                        'role' => $user->role->value,
                     ]
-                ))
-                ->withDebugEnabled()
-                ->send();
+                ]
+            );
 
             DB::commit();
         } catch (Exception $e) {
@@ -110,33 +118,37 @@ class UserController extends Controller
 
         $user->save();
 
-        Kafka::publishOn(topic: 'users-stream')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'UserUpdated',
-                    'data' => [
-                        'public_id' => $user->public_id,
-                        'name' => $user->name,
-                        'email' => $user->email,
-                    ]
+        $this->kafkaService->produce(
+            topic: 'users-stream',
+            data: [
+                'event_id' => Uuid::uuid6()->toString(),
+                'event_version' => '1',
+                'event_name' => 'UserUpdated',
+                'event_time' => time(),
+                'producer' => env('APP_NAME'),
+                'data' => [
+                    'public_id' => $user->public_id,
+                    'name' => $user->name,
+                    'email' => $user->email,
                 ]
-            ))
-            ->withDebugEnabled()
-            ->send();
+            ]
+        );
 
         if ($request->get('role', false)) {
-            Kafka::publishOn(topic: 'users-role')
-                ->withMessage(new Message(
-                    body: [
-                        'event_name' => 'UserRoleChanged',
-                        'data' => [
-                            'public_id' => $user->public_id,
-                            'role' => $user->role,
-                        ]
+            $this->kafkaService->produce(
+                topic: 'users-role',
+                data: [
+                    'event_id' => Uuid::uuid6()->toString(),
+                    'event_version' => '1',
+                    'event_name' => 'UserRoleChanged',
+                    'event_time' => time(),
+                    'producer' => env('APP_NAME'),
+                    'data' => [
+                        'public_id' => $user->public_id,
+                        'role' => $user->role->value,
                     ]
-                ))
-                ->withDebugEnabled()
-                ->send();
+                ]
+            );
         }
 
         return Redirect::to('/dashboard');

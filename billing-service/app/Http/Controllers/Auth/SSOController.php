@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -69,7 +70,12 @@ class SSOController extends Controller
 
             Auth::login($user);
 
-            return redirect('/dashboard');
+            switch ($user->role) {
+                case UserRole::worker:
+                    return redirect('/worker/view');
+                default:
+                    return redirect('/dashboard');
+            }
         } catch (\Throwable $e) {
             throw new InvalidArgumentException($e->getMessage());
         }
