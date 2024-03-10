@@ -1,0 +1,33 @@
+<x-app-layout>
+    <x-slot name="header">
+        <h2 class="font-semibold text-xl text-gray-800 leading-tight">
+            {{ __('My Balance') }}
+        </h2>
+    </x-slot>
+
+    <div class="py-12">
+        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
+            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
+                <div class="p-4">
+                    {{ $balance }}
+                </div>
+                <div class="p-6 text-gray-900">
+                    <table style="width: 100%; border: 1px; text-align: left" >
+                        <tr>
+                            <th>Пополнение</th>
+                            <th>Списание</th>
+                        </tr>
+                        @foreach($transactions as $transaction)
+                            <tr>
+                                <td>{{$task->debit}}</td>
+                                <td>{{$task->credit}}</td>
+                            </tr>
+
+                        @endforeach
+
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</x-app-layout>

@@ -6,6 +6,7 @@ use App\Enums\TaskStatus;
 use App\Enums\UserRole;
 use App\Models\Task;
 use App\Models\User;
+use App\Services\KafkaService;
 use Exception;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -14,9 +15,15 @@ use Illuminate\View\View;
 use Junges\Kafka\Facades\Kafka;
 use Junges\Kafka\Message\Message;
 use Junges\Kafka\Producers\MessageBatch;
+use Ramsey\Uuid\Uuid;
 
 class TaskController extends Controller
 {
+    public function __construct(
+        private readonly KafkaService $kafkaService
+    ) {
+    }
+
     public function list(Request $request)
     {
         $currentUser = $request->user();
@@ -60,33 +67,37 @@ class TaskController extends Controller
 
         $task->refresh();
 
-        Kafka::publishOn(topic: 'tasks-stream')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'TaskCreated',
-                    'data' => [
-                        'public_id' => $task->public_id,
-                        'description' => $task->description,
-                        'status' => $task->status,
-                        'assigned_user_id' => $task->user->public_id,
-                    ]
+        $this->kafkaService->produce(
+            topic: 'tasks-stream',
+            data: [
+                'event_id' => Uuid::uuid6()->toString(),
+                'event_version' => '1',
+                'event_name' => 'TaskCreated',
+                'event_time' => time(),
+                'producer' => env('APP_NAME'),
+                'data' => [
+                    'public_id' => $task->public_id,
+                    'description' => $task->description,
+                    'status' => $task->status->value,
+                    'assigned_user_id' => $task->user->public_id,
                 ]
-            ))
-            ->withDebugEnabled()
-            ->send();
+            ]
+        );
 
-        Kafka::publishOn(topic: 'tasks-flow')
-            ->withMessage(new Message(
-                body: [
-                    'event_name' => 'TaskAssigned',
-                    'data' => [
-                        'public_id' => $task->public_id,
-                        'assigned_user_id' => $task->user->public_id,
-                    ]
+        $this->kafkaService->produce(
+            topic: 'tasks-flow',
+            data: [
+                'event_id' => Uuid::uuid6()->toString(),
+                'event_version' => '1',
+                'event_name' => 'TaskAssigned',
+                'event_time' => time(),
+                'producer' => env('APP_NAME'),
+                'data' => [
+                    'public_id' => $task->public_id,
+                    'assigned_user_id' => $task->user->public_id,
                 ]
-            ))
-            ->withDebugEnabled()
-            ->send();
+            ]
+        );
 
         return Redirect::to('/dashboard');
     }
@@ -105,25 +116,30 @@ class TaskController extends Controller
         $task->status = TaskStatus::done;
         $task->save();
 
-        Kafka::publishOn(topic: 'tasks-flow')
-            ->withMessage(new Message(
-                body: [
+        $this->kafkaService->produce(
+            topic: 'tasks-flow',
+                data: [
+                    'event_id' => Uuid::uuid6()->toString(),
+                    'event_version' => '1',
                     'event_name' => 'TaskCompleted',
+                    'event_time' => time(),
+                    'producer' => env('APP_NAME'),
                     'data' => [
                         'public_id' => $task->public_id,
-                        'public_user_id' => $task->user->public_id,
+                        'assigned_user_id' => $task->user->public_id,
                     ]
                 ]
-            ))
-            ->withDebugEnabled()
-            ->send();
+            );
 
         return Redirect::to('/dashboard');
     }
 
     public function shuffle(Request $request)
     {
-        if ($request->user()->role !== UserRole::manager) {
+        if (
+            $request->user()->role !== UserRole::manager &&
+            $request->user()->role !== UserRole::admin
+        ) {
             throw new Exception(
                 sprintf('Только пользователь с ролью %s можно переназначить задачи', UserRole::manager->value)
             );
@@ -139,7 +155,7 @@ class TaskController extends Controller
             ->get();
 
         if (count($tasks) > 1 && count($users) > 1) {
-            $messageBatch = new MessageBatch();
+            $messageBatch = [];
 
             /** @var Task $task */
             foreach ($tasks as $task) {
@@ -150,22 +166,23 @@ class TaskController extends Controller
                 $task->user_id = $newUserId;
                 $task->save();
 
-                $messageBatch->push(
-                    new Message(
-                        body: [
-                            'event_name' => 'TaskAssigned',
-                            'data' => [
-                                'public_id' => $task->public_id,
-                                'assigned_user_id' => $task->user->public_id,
-                            ]
-                        ]
-                    )
-                );
+                $messageBatch[] = [
+                    'event_id' => Uuid::uuid6()->toString(),
+                    'event_version' => '1',
+                    'event_name' => 'TaskAssigned',
+                    'event_time' => time(),
+                    'producer' => env('APP_NAME'),
+                    'data' => [
+                        'public_id' => $task->public_id,
+                        'assigned_user_id' => $task->user->public_id,
+                    ]
+                ];
             }
 
-            Kafka::publishOn(topic: 'tasks-flow')
-                ->withDebugEnabled()
-                ->sendBatch($messageBatch);
+            $this->kafkaService->produceBatch(
+                topic: 'tasks-flow',
+                batchData: $messageBatch
+            );
         }
 
         return Redirect::to('/dashboard');
