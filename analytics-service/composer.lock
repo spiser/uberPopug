@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "fe705ae27ec6c3859a78e4d9ab971c6a",
+    "content-hash": "7b5c8a1b08e912db507d1b396c48d8f4",
     "packages": [
         {
             "name": "beberlei/assert",
@@ -2704,91 +2704,6 @@
                 }
             ],
             "time": "2024-03-06T16:17:14+00:00"
-        },
-        {
-            "name": "nwidart/laravel-modules",
-            "version": "10.0.6",
-            "source": {
-                "type": "git",
-                "url": "https://github.com/nWidart/laravel-modules.git",
-                "reference": "a6f2c8b53ae7945ef41d296735e963cee885ebde"
-            },
-            "dist": {
-                "type": "zip",
-                "url": "https://api.github.com/repos/nWidart/laravel-modules/zipball/a6f2c8b53ae7945ef41d296735e963cee885ebde",
-                "reference": "a6f2c8b53ae7945ef41d296735e963cee885ebde",
-                "shasum": ""
-            },
-            "require": {
-                "ext-json": "*",
-                "php": ">=8.1"
-            },
-            "require-dev": {
-                "friendsofphp/php-cs-fixer": "^3.6",
-                "laravel/framework": "^10.41",
-                "mockery/mockery": "^1.5",
-                "orchestra/testbench": "^8.0",
-                "phpstan/phpstan": "^1.4",
-                "phpunit/phpunit": "^10.0",
-                "spatie/phpunit-snapshot-assertions": "^5.0"
-            },
-            "type": "library",
-            "extra": {
-                "laravel": {
-                    "providers": [
-                        "Nwidart\\Modules\\LaravelModulesServiceProvider"
-                    ],
-                    "aliases": {
-                        "Module": "Nwidart\\Modules\\Facades\\Module"
-                    }
-                },
-                "branch-alias": {
-                    "dev-master": "10.0-dev"
-                }
-            },
-            "autoload": {
-                "files": [
-                    "src/helpers.php"
-                ],
-                "psr-4": {
-                    "Nwidart\\Modules\\": "src"
-                }
-            },
-            "notification-url": "https://packagist.org/downloads/",
-            "license": [
-                "MIT"
-            ],
-            "authors": [
-                {
-                    "name": "Nicolas Widart",
-                    "email": "n.widart@gmail.com",
-                    "homepage": "https://nicolaswidart.com",
-                    "role": "Developer"
-                }
-            ],
-            "description": "Laravel Module management",
-            "keywords": [
-                "laravel",
-                "module",
-                "modules",
-                "nwidart",
-                "rad"
-            ],
-            "support": {
-                "issues": "https://github.com/nWidart/laravel-modules/issues",
-                "source": "https://github.com/nWidart/laravel-modules/tree/10.0.6"
-            },
-            "funding": [
-                {
-                    "url": "https://github.com/dcblogdev",
-                    "type": "github"
-                },
-                {
-                    "url": "https://github.com/nwidart",
-                    "type": "github"
-                }
-            ],
-            "time": "2024-01-28T10:04:15+00:00"
         },
         {
             "name": "opis/json-schema",
@@ -6121,6 +6036,30 @@
             "time": "2023-12-08T13:03:43+00:00"
         },
         {
+            "name": "uber-popug/schema-registry",
+            "version": "dev-main",
+            "dist": {
+                "type": "path",
+                "url": "/var/www/modules/schema-registry",
+                "reference": "87717444ac7ef0fb936f4387b4ba41beea177d38"
+            },
+            "require": {
+                "opis/json-schema": "^2.3",
+                "php": "^8.3"
+            },
+            "type": "library",
+            "autoload": {
+                "psr-4": {
+                    "Modules\\SchemaRegistry\\": "src"
+                }
+            },
+            "description": "schema-registry",
+            "transport-options": {
+                "symlink": true,
+                "relative": false
+            }
+        },
+        {
             "name": "vlucas/phpdotenv",
             "version": "v5.6.0",
             "source": {
@@ -8905,7 +8844,9 @@
     ],
     "aliases": [],
     "minimum-stability": "stable",
-    "stability-flags": [],
+    "stability-flags": {
+        "uber-popug/schema-registry": 20
+    },
     "prefer-stable": true,
     "prefer-lowest": false,
     "platform": {

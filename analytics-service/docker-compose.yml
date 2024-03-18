@@ -19,6 +19,7 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            - '../modules:/var/www/modules'
             - ./local/php/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
         networks:
             - popugs
@@ -28,7 +29,7 @@ services:
         container_name: database_${APP_NAME}
         image: 'postgres:15'
         ports:
-            - '${FORWARD_DB_PORT:-5434}:5432'
+            - '${FORWARD_DB_PORT:-5435}:5432'
         environment:
             PGPASSWORD: '${DB_PASSWORD:-secret}'
             POSTGRES_DB: '${DB_DATABASE}'
