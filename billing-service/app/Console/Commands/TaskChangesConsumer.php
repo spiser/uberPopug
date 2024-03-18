@@ -42,38 +42,17 @@ class TaskChangesConsumer extends Command
 
                 switch ([$body['event_name'], $body['event_version']]) {
                     case ['TaskCreated', '1']:
-                        DB::beginTransaction();
-
-                        try {
-                            $task = Task::query()->create([
+                        Task::query()->upsert(
+                            values: [
                                 'public_id' => $body['data']['public_id'],
                                 'description' => $body['data']['description'],
                                 'assigned_cost' => rand(10, 20),
                                 'completed_cost' =>  rand(20, 40),
-                            ]);
-
-                            $user = User::query()
-                                ->where('public_id', $body['data']['assigned_user_id'])
-                                ->lockForUpdate()
-                                ->firstOrFail();
-
-                            $user->balance = $user->balance - $task->assigned_cost;
-                            $user->save();
-
-                            Transaction::query()->create([
-                                'user_id' => $user->id,
-                                'task_id' => $task->id,
-                                'type' => TransactionType::task,
-                                'debit' => 0,
-                                'credit' => $task->assigned_cost
-                            ]);
-
-                            DB::commit();
-                        } catch (\Exception $exception) {
-                            DB::rollBack();
-                            throw $exception;
-                        }
+                            ],
+                            uniqueBy: 'public_id'
+                        );
                         break;
+                    case ['TaskAdded', '1']:
                     case ['TaskAssigned', '1']:
                         DB::beginTransaction();
 
