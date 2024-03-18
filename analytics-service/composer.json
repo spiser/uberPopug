@@ -4,13 +4,21 @@
     "description": "The skeleton application for the Laravel framework.",
     "keywords": ["laravel", "framework"],
     "license": "MIT",
+    "repositories": [
+        {
+            "type": "path",
+            "url": "/var/www/modules/schema-registry",
+            "options": {
+                "symlink": true
+            }
+        }
+    ],
     "require": {
         "php": "^8.2",
         "laravel/framework": "^11.0",
         "laravel/tinker": "^2.9",
         "mateusjunges/laravel-kafka": "^1.13",
-        "nwidart/laravel-modules": "^10.0",
-        "opis/json-schema": "^2.3"
+        "uber-popug/schema-registry": "@dev"
     },
     "require-dev": {
         "fakerphp/faker": "^1.23",

@@ -2,14 +2,24 @@
 
 namespace App\Models;
 
-// use Illuminate\Contracts\Auth\MustVerifyEmail;
-use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Enums\UserRole;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Foundation\Auth\User as Authenticatable;
-use Illuminate\Notifications\Notifiable;
 
+/**
+ * @property int      $id
+ * @property string   $name
+ * @property string   $email
+ * @property UserRole $role
+ * @property bool     $active
+ * @property integer  $balance
+ * @property string   $public_id
+ */
 class User extends Authenticatable
 {
-    use HasFactory, Notifiable;
+    protected $attributes = [
+        'balance' => 0,
+    ];
 
     /**
      * The attributes that are mass assignable.
@@ -19,29 +29,23 @@ class User extends Authenticatable
     protected $fillable = [
         'name',
         'email',
-        'password',
+        'role',
+        'active',
+        'public_id'
     ];
 
     /**
-     * The attributes that should be hidden for serialization.
+     * The attributes that should be cast.
      *
-     * @var array<int, string>
+     * @var array<string, string>
      */
-    protected $hidden = [
-        'password',
-        'remember_token',
+    protected $casts = [
+        'active' => 'boolean',
+        'role' => UserRole::class
     ];
 
-    /**
-     * Get the attributes that should be cast.
-     *
-     * @return array<string, string>
-     */
-    protected function casts(): array
+    public function transactions(): HasMany
     {
-        return [
-            'email_verified_at' => 'datetime',
-            'password' => 'hashed',
-        ];
+        return $this->hasMany(Transaction::class);
     }
 }
