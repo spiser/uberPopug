@@ -84,6 +84,21 @@ class TaskController extends Controller
             ]
         );
 
+        $this->kafkaService->produce(
+            topic: 'tasks-flow',
+            data: [
+                'event_id' => Uuid::uuid6()->toString(),
+                'event_version' => '1',
+                'event_name' => 'TaskAssigned',
+                'event_time' => time(),
+                'producer' => env('APP_NAME'),
+                'data' => [
+                    'public_id' => $task->public_id,
+                    'assigned_user_id' => $task->user->public_id,
+                ]
+            ]
+        );
+
         return Redirect::to('/dashboard');
     }
 
