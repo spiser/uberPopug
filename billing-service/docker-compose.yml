@@ -19,6 +19,7 @@ services:
             IGNITION_LOCAL_SITES_PATH: '${PWD}'
         volumes:
             - '.:/var/www/html'
+            - '../modules:/var/www/modules'
             - ./local/php/supervisord.conf:/etc/supervisor/conf.d/supervisord.conf
         networks:
             - popugs
