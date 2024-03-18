@@ -89,11 +89,13 @@ class TaskController extends Controller
             data: [
                 'event_id' => Uuid::uuid6()->toString(),
                 'event_version' => '1',
-                'event_name' => 'TaskAssigned',
+                'event_name' => 'TaskAdded',
                 'event_time' => time(),
                 'producer' => env('APP_NAME'),
                 'data' => [
                     'public_id' => $task->public_id,
+                    'description' => $task->description,
+                    'status' => $task->status->value,
                     'assigned_user_id' => $task->user->public_id,
                 ]
             ]

@@ -52,6 +52,7 @@ class TaskChangesConsumer extends Command
                             uniqueBy: 'public_id'
                         );
                         break;
+                    case ['TaskAdded', '1']:
                     case ['TaskAssigned', '1']:
                         DB::beginTransaction();
 
