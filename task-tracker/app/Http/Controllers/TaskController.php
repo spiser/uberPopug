@@ -80,6 +80,8 @@ class TaskController extends Controller
                     'description' => $task->description,
                     'status' => $task->status->value,
                     'assigned_user_id' => $task->user->public_id,
+                    'created_at' => $task->created_at,
+                    'updated_at' => $task->updated_at,
                 ]
             ]
         );
@@ -97,6 +99,7 @@ class TaskController extends Controller
                     'description' => $task->description,
                     'status' => $task->status->value,
                     'assigned_user_id' => $task->user->public_id,
+                    'updated_at' => $task->updated_at,
                 ]
             ]
         );
@@ -129,6 +132,7 @@ class TaskController extends Controller
                     'data' => [
                         'public_id' => $task->public_id,
                         'assigned_user_id' => $task->user->public_id,
+                        'updated_at' => $task->updated_at,
                     ]
                 ]
             );
