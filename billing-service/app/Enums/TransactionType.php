@@ -3,6 +3,7 @@
 namespace App\Enums;
 
 enum TransactionType : string {
-    case task = 'task';
+    case enrolment = 'enrolment';
+    case withdrawal = 'withdrawal';
     case payment = 'payment';
 }
